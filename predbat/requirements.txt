@@ -11,3 +11,4 @@ numpy==2.3.5
 prometheus-client
 protobuf
 pvlib
+pycognito==2024.5.1
