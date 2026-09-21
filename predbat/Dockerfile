@@ -20,7 +20,12 @@ COPY rootfs /
 # COPY ingress.conf /etc/nginx/http.d/
 
 COPY requirements.txt /tmp/
+# Use distribution crypto dependencies on ARMv7, where PyPI wheels are unavailable.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends python3-cryptography \
+    && rm -rf /var/lib/apt/lists/*
 RUN pip install --break-system-packages -r /tmp/requirements.txt
+RUN python3 -c "from importlib.metadata import version; from pycognito import Cognito; assert version('pycognito') == '2024.5.1'"
 
 # Start app
 RUN chmod a+x /run.sh
