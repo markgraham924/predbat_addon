@@ -21,3 +21,19 @@ jobs:
           docker run --rm --entrypoint python3 predbat-native:test -c
           "from importlib.metadata import version; from pycognito import Cognito;
           assert version('pycognito') == '2024.5.1'; print('Native pricing dependency available')"
+      - name: Verify s6 entrypoint boots the application
+        shell: bash
+        run: |
+          mkdir smoke-config
+          touch smoke-config/apps.yaml
+          printf 'print("PREDBAT_BOOT_SMOKE_OK", flush=True)\nimport time\ntime.sleep(120)\n' > smoke-config/hass.py
+          docker run -d --name predbat-boot -v "$PWD/smoke-config:/config" predbat-native:test
+          trap 'docker rm -f predbat-boot' EXIT
+          for attempt in $(seq 1 30); do
+            if docker logs predbat-boot 2>&1 | grep -q PREDBAT_BOOT_SMOKE_OK; then
+              exit 0
+            fi
+            sleep 1
+          done
+          docker logs predbat-boot
+          exit 1
