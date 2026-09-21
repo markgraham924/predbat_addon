@@ -1,0 +1,23 @@
+name: Build native pricing image
+on:
+  push:
+    branches: [main, codex/eon-optimise-dependency]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  amd64:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build the Home Assistant image
+        run: >-
+          docker build --build-arg BUILD_FROM=ghcr.io/hassio-addons/ubuntu-base/amd64:10.0.5
+          --build-arg BUILD_ARCH=amd64 --build-arg BUILD_VERSION=1.7.2
+          -t predbat-native:test predbat
+      - name: Verify native pricing dependency without HA credentials
+        run: >-
+          docker run --rm --entrypoint python3 predbat-native:test -c
+          "from importlib.metadata import version; from pycognito import Cognito;
+          assert version('pycognito') == '2024.5.1'; print('Native pricing dependency available')"
